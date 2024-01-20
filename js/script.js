@@ -1,4 +1,6 @@
+import imprimeCotacao from "./imprimeCotacao.js";
 const graficoDolar = document.getElementById("graficoDolar");
+
 const graficoParaDolar = new Chart(graficoDolar, {
   type: "line",
   data: {
@@ -13,23 +15,12 @@ const graficoParaDolar = new Chart(graficoDolar, {
   },
 });
 
-setInterval(() => getCotacao(), 5000);
-
-async function getCotacao() {
-  const conexao = await fetch(
-    "https://economia.awesomeapi.com.br/json/last/USD-BRL"
-  );
-  const cotacao = await conexao.json();
-  const valor = cotacao.USDBRL.ask;
-  const tempo = getHours();
-  adicionarDados(graficoParaDolar, tempo, valor);
-}
-
-function getHours() {
-  let date = new Date();
-  let hour =
-    date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-  return hour;
+function geraHorario() {
+  let data = new Date();
+  let horario =
+    data.getHours() + ":" + data.getMinutes() + ":" + data.getSeconds();
+  console.log(horario);
+  return horario;
 }
 
 function adicionarDados(grafico, legenda, dados) {
@@ -39,3 +30,13 @@ function adicionarDados(grafico, legenda, dados) {
   });
   grafico.update();
 }
+
+let workerDolar = new Worker("./js/workers/workerDolar.js");
+workerDolar.postMessage("usd");
+
+workerDolar.addEventListener("message", (event) => {
+  let tempo = geraHorario();
+  let valor = event.data.ask;
+  imprimeCotacao("dolar", valor);
+  adicionarDados(graficoParaDolar, tempo, valor);
+});
